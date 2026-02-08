@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>מעקב חפצים - בין שני מקומות</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 16px; overflow-x: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            -webkit-text-size-adjust: none;
+            font-size: 16px;
+            overflow-x: hidden;
+            width: 100%;
+        }
+        .container { max-width: 1200px; margin: 0 auto; width: 100%; overflow-x: hidden; }
+        header {
+            background: white; padding: 25px 20px; border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px; text-align: center;
+        }
+        h1 { color: #667eea; font-size: 1.75rem; margin-bottom: 8px; }
+        .subtitle { color: #666; font-size: 1rem; }
+        .save-indicator {
+            display: inline-block; margin-right: 10px; padding: 4px 12px;
+            border-radius: 12px; font-size: 0.85rem;
+            background: #10b981; color: white; opacity: 0; transition: opacity 0.3s;
+        }
+        .save-indicator.show { opacity: 1; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .card {
+            background: white; padding: 15px; border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .card h2 { color: #667eea; margin-bottom: 15px; font-size: 1.4rem; display: flex; align-items: center; gap: 10px; }
+        .icon { font-size: 1.5rem; }
+        .input-group { display: flex; gap: 8px; margin-bottom: 15px; }
+        input[type="text"], textarea {
+            flex: 1; padding: 12px 14px; border: 2px solid #e0e0e0;
+            border-radius: 8px; font-size: 1rem;
+        }
+        input[type="number"] {
+            width: 70px; padding: 12px 10px; border: 2px solid #e0e0e0; border-radius: 8px;
+        }
+        button {
+            padding: 12px 18px; background: #667eea; color: white;
+            border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
+        }
+        button.delete { background: #ef4444; }
+        button.plus { background: #10b981; }
+        button.minus { background: #f59e0b; }
+        button.copy-to { background: #8b5cf6; }
+        .item-list { list-style: none; }
+        .item {
+            background: #f8f9fa; padding: 12px 14px; margin-bottom: 10px;
+            border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .item-name { flex: 1; }
+        .quantity-badge {
+            background: #667eea; color: white; padding: 5px 13px;
+            border-radius: 20px; margin-left: 10px;
+        }
+        .quantity-needed { background: #f59e0b; }
+        .empty-state { text-align: center; color: #999; padding: 30px 20px; }
+        .to-bring { background: #fef3c7; }
+    </style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>🏠 מעקב חפצים בין שני מקומות</h1>
+<p class="subtitle"><span class="save-indicator" id="saveIndicator">✓ נשמר</span>נהל את המלאי שלך בקלות</p>
+</header>
+
+<div class="grid">
+<div class="card">
+<h2>📦 מה יש לי בישיבה</h2>
+<div class="input-group">
+<textarea id="currentInput" placeholder="שם הפריט"></textarea>
+<input type="number" id="currentQtyInput" value="1">
+<button onclick="addCurrentItem()">הוסף</button>
+</div>
+<ul id="currentList" class="item-list"></ul>
+</div>
+
+<div class="card">
+<h2>⭐ מה צריך להיות</h2>
+<div class="input-group">
+<textarea id="requiredInput" placeholder="שם הפריט"></textarea>
+<input type="number" id="requiredQtyInput" value="1">
+<button onclick="addRequiredItem()">הוסף</button>
+</div>
+<ul id="requiredList" class="item-list"></ul>
+</div>
+</div>
+
+<div class="card to-bring">
+<h2>✈️ מה צריך להביא</h2>
+<ul id="toBringList" class="item-list"></ul>
+</div>
+</div>
+
+<script>
+let currentItems = {};
+let requiredItems = {};
+
+function saveData() {
+    localStorage.setItem('itemTracker_current', JSON.stringify(currentItems));
+    localStorage.setItem('itemTracker_required', JSON.stringify(requiredItems));
+    document.getElementById('saveIndicator').classList.add('show');
+    setTimeout(()=>document.getElementById('saveIndicator').classList.remove('show'),1500);
+}
+
+function loadData() {
+    const c = localStorage.getItem('itemTracker_current');
+    const r = localStorage.getItem('itemTracker_required');
+    if (c) currentItems = JSON.parse(c);
+    if (r) requiredItems = JSON.parse(r);
+    render();
+}
+
+function addCurrentItem() {
+    const name = currentInput.value.trim();
+    const qty = parseInt(currentQtyInput.value) || 1;
+    if (!name) return;
+    currentItems[name] = (currentItems[name] || 0) + qty;
+    currentInput.value = '';
+    saveData(); render();
+}
+
+function addRequiredItem() {
+    const name = requiredInput.value.trim();
+    const qty = parseInt(requiredQtyInput.value) || 1;
+    if (!name) return;
+    requiredItems[name] = (requiredItems[name] || 0) + qty;
+    requiredInput.value = '';
+    saveData(); render();
+}
+
+function render() {
+    currentList.innerHTML = Object.entries(currentItems).map(([i,q])=>`<li class="item">${i}<span class="quantity-badge">${q}</span></li>`).join('') || '<div class="empty-state">אין פריטים</div>';
+    requiredList.innerHTML = Object.entries(requiredItems).map(([i,q])=>`<li class="item">${i}<span class="quantity-badge">${q}</span></li>`).join('') || '<div class="empty-state">אין פריטים</div>';
+    const toBring = [];
+    for (const i in requiredItems) {
+        const need = requiredItems[i] - (currentItems[i]||0);
+        if (need>0) toBring.push([i,need]);
+    }
+    toBringList.innerHTML = toBring.map(([i,q])=>`<li class="item">📌 ${i}<span class="quantity-badge quantity-needed">${q}</span></li>`).join('') || '<div class="empty-state">🎉 הכל מוכן</div>';
+}
+
+window.addEventListener('DOMContentLoaded', loadData);
+</script>
+</body>
+</html>
