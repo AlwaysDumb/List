@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>מעקב חפצים - בין שני מקומות</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 16px;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            -webkit-text-size-adjust: none;
+            font-size: 16px;
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: white;
+            padding: 25px 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 1.75rem;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .save-indicator {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            background: #10b981;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .save-indicator.show {
+            opacity: 1;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        textarea {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            resize: vertical;
+            min-height: 44px;
+            font-family: inherit;
+        }
+
+        input[type="number"] {
+            width: 70px;
+            flex-shrink: 0;
+            padding: 12px 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 18px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.delete {
+            background: #ef4444;
+            padding: 10px 16px;
+            font-size: 0.95rem;
+        }
+
+        button.delete:hover {
+            background: #dc2626;
+        }
+
+        button.plus, button.minus {
+            background: #10b981;
+            padding: 6px 10px;
+            font-size: 1.1rem;
+            margin-left: 3px;
+            min-width: 32px;
+        }
+
+        button.minus {
+            background: #f59e0b;
+        }
+
+        button.plus:hover {
+            background: #059669;
+        }
+
+        button.minus:hover {
+            background: #d97706;
+        }
+
+        button.copy-to {
+            background: #8b5cf6;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            margin-left: 5px;
+        }
+
+        button.copy-to:hover {
+            background: #7c3aed;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .qty-controls {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+
+        .item-list {
+            list-style: none;
+        }
+
+        .item {
+            background: #f8f9fa;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .item:hover {
+            transform: translateX(-5px);
+        }
+
+        .item-name {
+            font-size: 1rem;
+            color: #333;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .quantity-badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 13px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .quantity-needed {
+            background: #f59e0b;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 30px 20px;
+            font-size: 1rem;
+        }
+
+        .to-bring {
+            background: #fef3c7;
+        }
+
+        .to-bring .item {
+            background: #fef9e7;
+            border-right: 4px solid #f59e0b;
+        }
+
+        .stats {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: #f0f4ff;
+            padding: 14px 18px;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            .input-group {
+                gap: 6px;
+            }
+            
+            input[type="text"], textarea {
+                padding: 10px 12px;
+                font-size: 0.95rem;
+            }
+            
+            input[type="number"] {
+                width: 60px;
+                padding: 10px 8px;
+                font-size: 0.95rem;
+            }
+            
+            button {
+                padding: 10px 14px;
+                font-size: 0.9rem;
+            }
+            
+            button.delete {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+            
+            button.plus, button.minus {
+                padding: 6px 8px;
+                font-size: 1rem;
+                min-width: 28px;
+            }
+            
+            button.copy-to {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+            
+            .stat {
+                min-width: 80px;
+                padding: 12px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 מעקב חפצים בין שני מקומות</h1>
+            <p class="subtitle">
+                <span class="save-indicator" id="saveIndicator">✓ נשמר</span>
+                נהל את המלאי שלך בקלות
+            </p>
+        </header>
+
+        <div class="grid">
+            <div class="card">
+                <h2><span class="icon">📦</span> מה יש לי בישיבה</h2>
+                <div class="input-group">
+                    <textarea id="currentInput" placeholder="שם הפריט (או הדבק רשימה...)" rows="1"></textarea>
+                    <input type="number" id="currentQtyInput" placeholder="כמה?" min="1" value="1">
+                    <button onclick="addCurrentItem()">הוסף</button>
+                </div>
+                <ul class="item-list" id="currentList"></ul>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">⭐</span> מה צריך להיות</h2>
+                <div class="input-group">
+                    <textarea id="requiredInput" placeholder="שם הפריט (או הדבק רשימה...)" rows="1"></textarea>
+                    <input type="number" id="requiredQtyInput" placeholder="כמה?" min="1" value="1">
+                    <button onclick="addRequiredItem()">הוסף</button>
+                </div>
+                <ul class="item-list" id="requiredList"></ul>
+            </div>
+        </div>
+
+        <div class="card to-bring">
+            <h2><span class="icon">✈️</span> מה צריך להביא</h2>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number" id="toBringCount">0</div>
+                    <div class="stat-label">פריטים להביא</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="currentCount">0</div>
+                    <div class="stat-label">יש לי</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="requiredCount">0</div>
+                    <div class="stat-label">רוצה</div>
+                </div>
+            </div>
+            <ul class="item-list" id="toBringList"></ul>
+        </div>
+    </div>
+
+    <script>
+        let currentItems = {};
+        let requiredItems = {};
+
+        function showSaveIndicator() {
+            const indicator = document.getElementById('saveIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => indicator.classList.remove('show'), 2000);
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('itemTracker_current', JSON.stringify(currentItems));
+                localStorage.setItem('itemTracker_required', JSON.stringify(requiredItems));
+                showSaveIndicator();
+            } catch (e) {
+                console.error('Error saving:', e);
+            }
+        }
+
+        function loadData() {
+            try {
+                const savedCurrent = localStorage.getItem('itemTracker_current');
+                const savedRequired = localStorage.getItem('itemTracker_required');
+                if (savedCurrent) currentItems = JSON.parse(savedCurrent);
+                if (savedRequired) requiredItems = JSON.parse(savedRequired);
+                render();
+            } catch (e) {
+                console.error('Error loading:', e);
+            }
+        }
+
+        function addCurrentItem() {
+            const input = document.getElementById('currentInput');
+            const qtyInput = document.getElementById('currentQtyInput');
+            const defaultQty = parseInt(qtyInput.value) || 1;
+            
+            let lines = input.value.split(/\n+/).map(l => l.trim()).filter(l => l);
+            let items = [];
+            lines.forEach(line => {
+                items = items.concat(line.split(',').map(i => i.trim()).filter(i => i));
+            });
+            
+            if (items.length > 0) {
+                items.forEach(item => {
+                    let name = item;
+                    let qty = defaultQty;
+                    
+                    const qtyMatch = item.match(/^(.+?)\s*[\(\s](?:יש\s*)?(\d+)[\)]?\s*$/);
+                    if (qtyMatch) {
+                        name = qtyMatch[1].trim();
+                        qty = parseInt(qtyMatch[2]);
+                    } else {
+                        const simpleQtyMatch = item.match(/^(.+?)\s+(\d+)\s*$/);
+                        if (simpleQtyMatch) {
+                            name = simpleQtyMatch[1].trim();
+                            qty = parseInt(simpleQtyMatch[2]);
+                        }
+                    }
+                    currentItems[name] = qty;
+                });
+                input.value = '';
+                qtyInput.value = '1';
+                input.style.height = 'auto';
+                saveData();
+                render();
+            }
+        }
+
+        function addRequiredItem() {
+            const input = document.getElementById('requiredInput');
+            const qtyInput = document.getElementById('requiredQtyInput');
+            const defaultQty = parseInt(qtyInput.value) || 1;
+            
+            let lines = input.value.split(/\n+/).map(l => l.trim()).filter(l => l);
+            let items = [];
+            lines.forEach(line => {
+                items = items.concat(line.split(',').map(i => i.trim()).filter(i => i));
+            });
+            
+            if (items.length > 0) {
+                items.forEach(item => {
+                    let name = item;
+                    let qty = defaultQty;
+                    
+                    const qtyMatch = item.match(/^(.+?)\s*[\(\s](?:יש\s*)?(\d+)[\)]?\s*$/);
+                    if (qtyMatch) {
+                        name = qtyMatch[1].trim();
+                        qty = parseInt(qtyMatch[2]);
+                    } else {
+                        const simpleQtyMatch = item.match(/^(.+?)\s+(\d+)\s*$/);
+                        if (simpleQtyMatch) {
+                            name = simpleQtyMatch[1].trim();
+                            qty = parseInt(simpleQtyMatch[2]);
+                        }
+                    }
+                    requiredItems[name] = qty;
+                });
+                input.value = '';
+                qtyInput.value = '1';
+                input.style.height = 'auto';
+                saveData();
+                render();
+            }
+        }
+
+        function incrementCurrentItem(item) {
+            currentItems[item] = (currentItems[item] || 0) + 1;
+            saveData();
+            render();
+        }
+
+        function decrementCurrentItem(item) {
+            if (currentItems[item] > 1) {
+                currentItems[item]--;
+                saveData();
+                render();
+            } else {
+                removeCurrentItem(item);
+            }
+        }
+
+        function incrementRequiredItem(item) {
+            requiredItems[item] = (requiredItems[item] || 0) + 1;
+            saveData();
+            render();
+        }
+
+        function decrementRequiredItem(item) {
+            if (requiredItems[item] > 1) {
+                requiredItems[item]--;
+                saveData();
+                render();
+            } else {
+                removeRequiredItem(item);
+            }
+        }
+
+        function copyToCurrentFromRequired(item) {
+            const qty = requiredItems[item];
+            if (qty) {
+                currentItems[item] = qty;
+                saveData();
+                render();
+            }
+        }
+
+        function copyToRequiredFromCurrent(item) {
+            const qty = currentItems[item];
+            if (qty) {
+                requiredItems[item] = qty;
+                saveData();
+                render();
+            }
+        }
+
+        function removeCurrentItem(item) {
+            delete currentItems[item];
+            saveData();
+            render();
+        }
+
+        function removeRequiredItem(item) {
+            delete requiredItems[item];
+            saveData();
+            render();
+        }
+
+        function calculateToBring() {
+            const toBring = {};
+            for (const [item, requiredQty] of Object.entries(requiredItems)) {
+                const currentQty = currentItems[item] || 0;
+                const needed = requiredQty - currentQty;
+                if (needed > 0) toBring[item] = needed;
+            }
+            return toBring;
+        }
+
+        function render() {
+            const currentList = document.getElementById('currentList');
+            const requiredList = document.getElementById('requiredList');
+            const toBringList = document.getElementById('toBringList');
+            const toBring = calculateToBring();
+
+            const currentEntries = Object.entries(currentItems);
+            if (currentEntries.length === 0) {
+                currentList.innerHTML = '<div class="empty-state">עדיין לא הוספת פריטים</div>';
+            } else {
+                currentList.innerHTML = currentEntries.map(([item, qty]) => `
+                    <li class="item">
+                        <span class="item-name">${item}<span class="quantity-badge">${qty}</span></span>
+                        <div class="item-actions">
+                            <div class="qty-controls">
+                                <button class="minus" data-action="dec-current" data-item="${item}">-</button>
+                                <button class="plus" data-action="inc-current" data-item="${item}">+</button>
+                            </div>
+                            <button class="copy-to" data-action="copy-to-required" data-item="${item}">→ צריך</button>
+                            <button class="delete" data-action="del-current" data-item="${item}">מחק</button>
+                        </div>
+                    </li>
+                `).join('');
+            }
+
+            const requiredEntries = Object.entries(requiredItems);
+            if (requiredEntries.length === 0) {
+                requiredList.innerHTML = '<div class="empty-state">עדיין לא הוספת פריטים</div>';
+            } else {
+                requiredList.innerHTML = requiredEntries.map(([item, qty]) => `
+                    <li class="item">
+                        <span class="item-name">${item}<span class="quantity-badge">${qty}</span></span>
+                        <div class="item-actions">
+                            <div class="qty-controls">
+                                <button class="minus" data-action="dec-required" data-item="${item}">-</button>
+                                <button class="plus" data-action="inc-required" data-item="${item}">+</button>
+                            </div>
+                            <button class="copy-to" data-action="copy-to-current" data-item="${item}">→ יש לי</button>
+                            <button class="delete" data-action="del-required" data-item="${item}">מחק</button>
+                        </div>
+                    </li>
+                `).join('');
+            }
+
+            const toBringEntries = Object.entries(toBring);
+            if (toBringEntries.length === 0) {
+                toBringList.innerHTML = '<div class="empty-state">🎉 יש לך את כל מה שאתה צריך!</div>';
+            } else {
+                toBringList.innerHTML = toBringEntries.map(([item, qty]) => `
+                    <li class="item">
+                        <span class="item-name">📌 ${item}<span class="quantity-badge quantity-needed">${qty}</span></span>
+                    </li>
+                `).join('');
+            }
+
+            const totalToBring = Object.values(toBring).reduce((sum, qty) => sum + qty, 0);
+            const totalCurrent = Object.values(currentItems).reduce((sum, qty) => sum + qty, 0);
+            const totalRequired = Object.values(requiredItems).reduce((sum, qty) => sum + qty, 0);
+            
+            document.getElementById('toBringCount').textContent = totalToBring;
+            document.getElementById('currentCount').textContent = totalCurrent;
+            document.getElementById('requiredCount').textContent = totalRequired;
+            
+            setupEventListeners();
+        }
+        
+        function setupEventListeners() {
+            document.querySelectorAll('.item-list').forEach(list => {
+                const newList = list.cloneNode(true);
+                list.parentNode.replaceChild(newList, list);
+            });
+            
+            document.getElementById('currentList').addEventListener('click', handleCurrentListClick);
+            document.getElementById('requiredList').addEventListener('click', handleRequiredListClick);
+        }
+        
+        function handleCurrentListClick(e) {
+            const button = e.target.closest('button');
+            if (!button) return;
+            const action = button.getAttribute('data-action');
+            const item = button.getAttribute('data-item');
+            if (!action || !item) return;
+            
+            switch(action) {
+                case 'inc-current': incrementCurrentItem(item); break;
+                case 'dec-current': decrementCurrentItem(item); break;
+                case 'copy-to-required': copyToRequiredFromCurrent(item); break;
+                case 'del-current': removeCurrentItem(item); break;
+            }
+        }
+        
+        function handleRequiredListClick(e) {
+            const button = e.target.closest('button');
+            if (!button) return;
+            const action = button.getAttribute('data-action');
+            const item = button.getAttribute('data-item');
+            if (!action || !item) return;
+            
+            switch(action) {
+                case 'inc-required': incrementRequiredItem(item); break;
+                case 'dec-required': decrementRequiredItem(item); break;
+                case 'copy-to-current': copyToCurrentFromRequired(item); break;
+                case 'del-required': removeRequiredItem(item); break;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadData);
+        window.addEventListener('beforeunload', saveData);
+    </script>
+</body>
+</html>
